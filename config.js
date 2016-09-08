@@ -16,5 +16,7 @@ module.exports = {
         issuer: 'thisdemo',
         accessTokenSecret: 'XT6PRpRuehFsyMa2',
         refreshTokenSecret: 'JWPVzFWkqGxoE2C2'
-    }
+    },
+    tokenFormat: 'jwt'
+
 }

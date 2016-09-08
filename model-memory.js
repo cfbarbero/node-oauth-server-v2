@@ -1,5 +1,5 @@
 var _ = require('lodash'),
-    token = require('./oauth-jwt.js');
+    jwtToken = require('./oauth-jwt.js');
 
 var model = module.exports;
 
@@ -35,23 +35,11 @@ var users = [{
 }];
 
 
-// Functions required to implement the model for oauth2-server
-
-// generateToken
-model.generateToken = token.generateToken;
-
-// The bearer token is a JWT, so we decrypt and verify it. We get a reference to the
-// user in this function which oauth2-server puts into the req object
-model.getAccessToken = token.getAccessToken;
-
-// As we're using JWT there's no need to store the token after it's generated
-model.saveAccessToken = function(accessToken, clientId, expires, userId, callback) {
-    return callback(false);
-};
-
-// The bearer token is a JWT, so we decrypt and verify it. We get a reference to the
-// user in this function which oauth2-server puts into the req object
-model.getRefreshToken = token.getRefreshToken;
+// use the jwtToken implementation for these methods
+model.generateToken = jwtToken.generateToken;
+model.getAccessToken = jwtToken.getAccessToken;
+model.saveAccessToken = jwtToken.saveAccessToken;
+model.getRefreshToken = jwtToken.getRefreshToken;
 
 // required for grant_type=refresh_token
 // As we're using JWT there's no need to store the token after it's generated

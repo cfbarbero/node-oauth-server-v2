@@ -1,22 +1,7 @@
-/**
- * Copyright 2013-present NightWorld.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *    http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 var config = require('./config.js'),
     _ = require('lodash'),
-    AWS = require('aws-sdk');
+    AWS = require('aws-sdk'),
+    jwtToken = require('./oauth-jwt.js');
 
 AWS.config.loadFromPath(__dirname + '/aws.json');
 
@@ -30,10 +15,18 @@ if (config.seedDB) {
 
 model = module.exports;
 
-//
-// node-oauth2-server callbacks
-//
-model.getAccessToken = function(bearerToken, callback) {
+if (config.tokenFormat == 'jwt') {
+    model.generateToken = jwtToken.generateToken;
+    model.getAccessToken = jwtToken.getAccessToken;
+    model.getRefreshToken = jwtToken.getRefreshToken;
+    model.saveAccessToken = jwtToken.saveAccessToken;
+} else {
+    model.getAccessToken = getAccessTokenFromDynamo;
+    model.saveAccessToken = saveAccessTokenToDynamo;
+}
+
+
+function getAccessTokenFromDynamo(bearerToken, callback) {
     console.log('in getAccessToken (bearerToken: ' + bearerToken + ')');
 
     docClient.get({
@@ -56,6 +49,24 @@ model.getAccessToken = function(bearerToken, callback) {
         .catch(function(err) {
             callback(err);
         });
+};
+
+function saveAccessTokenToDynamo(accessToken, clientId, expires, user, callback) {
+    console.log('in saveAccessToken (accessToken: ' + accessToken + ', clientId: ' + clientId + ', userId: ' + user.id + ', expires: ' + expires + ')');
+
+    var token = {
+        accessToken: accessToken,
+        clientId: clientId,
+        userId: user.userId
+    };
+
+    if (expires) token.expires = parseInt(expires / 1000, 10);
+    console.log('saving', token);
+
+    docClient.put({
+        TableName: config.dynamoTables.oauthAccessToken,
+        Item: token
+    }, callback);
 };
 
 model.getClient = function(clientId, clientSecret, callback) {
@@ -92,23 +103,7 @@ model.grantTypeAllowed = function(clientId, grantType, callback) {
     callback(false, true);
 };
 
-model.saveAccessToken = function(accessToken, clientId, expires, user, callback) {
-    console.log('in saveAccessToken (accessToken: ' + accessToken + ', clientId: ' + clientId + ', userId: ' + user.id + ', expires: ' + expires + ')');
 
-    var token = {
-        accessToken: accessToken,
-        clientId: clientId,
-        userId: user.userId
-    };
-
-    if (expires) token.expires = parseInt(expires / 1000, 10);
-    console.log('saving', token);
-
-    docClient.put({
-        TableName: config.dynamoTables.oauthAccessToken,
-        Item: token
-    }, callback);
-};
 
 
 model.getUser = function(username, password, callback) {

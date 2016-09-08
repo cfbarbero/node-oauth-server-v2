@@ -1,10 +1,11 @@
 var JWT = require('jsonwebtoken'),
     config = require('./config.js');
 
+
 // generateToken
 // This generateToken implementation generates a token with JWT.
 // the token output is the Base64 encoded string.
-model.generateToken = function(type, req, callback) {
+ function generateToken(type, req, callback) {
     var token;
     var secret;
     var user = req.user;
@@ -35,7 +36,9 @@ model.generateToken = function(type, req, callback) {
     callback(false, token);
 };
 
-model.getAccessToken = function(bearerToken, callback) {
+// The bearer token is a JWT, so we decrypt and verify it. We get a reference to the
+// user in this function which oauth2-server puts into the req object
+function getAccessToken(bearerToken, callback) {
 
     return JWT.verify(bearerToken, config.jwt.accessTokenSecret, function(err, decoded) {
 
@@ -46,17 +49,17 @@ model.getAccessToken = function(bearerToken, callback) {
         // other verifications could be performed here
         // eg. that the jti is valid
 
-        // we could pass the payload straight out we use an object with the
-        // mandatory keys expected by oauth2-server, plus any other private
-        // claims that are useful
-        return callback(false, {
+        var token = {
             expires: new Date(decoded.exp),
-            user: getUserById(decoded.userId)
-        });
+            userId: decoded.userId
+        };
+        return callback(false, token);
     });
 };
 
-model.getRefreshToken = function(bearerToken, callback) {
+// The bearer token is a JWT, so we decrypt and verify it. We get a reference to the
+// user in this function which oauth2-server puts into the req object
+function getRefreshToken(bearerToken, callback) {
     return JWT.verify(bearerToken, config.jwt.refreshTokenSecret, function(err, decoded) {
 
         if (err) {
@@ -75,3 +78,16 @@ model.getRefreshToken = function(bearerToken, callback) {
         });
     });
 };
+
+// As we're using JWT there's no need to store the token after it's generated
+function saveAccessToken(accessToken, clientId, expires, userId, callback) {
+    return callback(false);
+};
+
+
+module.exports = {
+  generateToken: generateToken,
+  getAccessToken: getAccessToken,
+  getRefreshToken: getRefreshToken,
+  saveAccessToken: saveAccessToken
+}
