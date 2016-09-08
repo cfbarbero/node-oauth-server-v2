@@ -19,11 +19,11 @@ gulp.task('zip', () => {
             ], {
                 base: "."
             })
-        .pipe(zip(pjson.name+'-'+pjson.version+'.zip'))
+        .pipe(zip(pjson.name + '-' + pjson.version + '.zip'))
         .pipe(gulp.dest('dist'));
 });
 
-gulp.task("clean", function() {
+gulp.task('clean', function() {
     return gulp.src("dist", {
         read: false
     }).pipe(clean());
