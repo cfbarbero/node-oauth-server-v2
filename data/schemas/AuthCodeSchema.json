@@ -1,0 +1,15 @@
+{
+    "AttributeDefinitions": [{
+        "AttributeName": "authCode",
+        "AttributeType": "S"
+    }],
+    "TableName": "oauth_authcode",
+    "KeySchema": [{
+        "AttributeName": "authCode",
+        "KeyType": "HASH"
+    }],
+    "ProvisionedThroughput": {
+        "ReadCapacityUnits": 6,
+        "WriteCapacityUnits": 6
+    }
+}

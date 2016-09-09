@@ -1,0 +1,35 @@
+{
+    "_dependencies": {
+        "bcrypt": "bcrypt"
+    },
+    "accessToken": {
+        "_schema": "data/schemas/AccessTokenSchema.json"
+    },
+    "authCode": {
+        "_schema": "data/schemas/AuthCodeSchema.json"
+    },
+    "client": {
+        "_schema": "data/schemas/ClientSchema.json",
+        "foo": {
+            "clientId": "foo",
+            "clientSecret": "$2a$08$YpKC5NBEIVOFvd5.LBtiEOUjKUodyMEFNhKeoNCNVbqgQozqZqrGC",
+            "username": "cfbarbero"
+        },
+        "ThisIsALongClientId": {
+            "clientId": "ThisIsALongClientId",
+            "clientSecret": "$2a$08$YpKC5NBEIVOFvd5.LBtiEOUjKUodyMEFNhKeoNCNVbqgQozqZqrGC",
+            "username": "cfbarbero"
+        }
+    },
+    "refreshToken": {
+        "_schema": "data/schemas/RefreshTokenSchema.json"
+    },
+    "userSchema": {
+        "_schema": "data/schemas/UserSchema.json",
+        "cfbarbero": {
+            "username": "cfbarbero",
+            "password": "$2a$08$fB5yB0VlolDkI2o0P62avOdfnD3FOnkr/PWAYroC6FDG5jMwzDtS.",
+            "userId": "123"
+        }
+    }
+}

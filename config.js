@@ -5,11 +5,11 @@ module.exports = {
             seedDB: true,
             createTables: true,
             dynamoTables: {
-                oauthAccessToken: "oauth2accesstoken",
-                oauthAuthCode: "oauth2authcode",
-                oauthRefreshToken: "oauth2refreshtoken",
-                oauthClient: "oauth2client",
-                oauthUser: "oauth2user"
+                oauthAccessToken: "oauth_accesstoken",
+                oauthAuthCode: "oauth_authcode",
+                oauthRefreshToken: "oauth_refreshtokens",
+                oauthClient: "oauth_client",
+                oauthUser: "oauth_user"
             }
         }
     },

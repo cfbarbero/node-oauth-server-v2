@@ -15,6 +15,7 @@ gulp.task('zip', () => {
     return gulp.src(
             [
                 "*.js",
+                "data/**/*",
                 "package.json"
             ], {
                 base: "."

@@ -1,0 +1,15 @@
+{
+    "AttributeDefinitions": [{
+        "AttributeName": "refreshToken",
+        "AttributeType": "S"
+    }],
+    "TableName": "oauth_refreshtokens",
+    "KeySchema": [{
+        "AttributeName": "refreshToken",
+        "KeyType": "HASH"
+    }],
+    "ProvisionedThroughput": {
+        "ReadCapacityUnits": 6,
+        "WriteCapacityUnits": 6
+    }
+}

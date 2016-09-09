@@ -1,0 +1,15 @@
+{
+    "AttributeDefinitions": [{
+        "AttributeName": "clientId",
+        "AttributeType": "S"
+    }],
+    "TableName": "oauth_client",
+    "KeySchema": [{
+        "AttributeName": "clientId",
+        "KeyType": "HASH"
+    }],
+    "ProvisionedThroughput": {
+        "ReadCapacityUnits": 6,
+        "WriteCapacityUnits": 6
+    }
+}

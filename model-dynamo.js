@@ -1,16 +1,16 @@
 var config = require('./config.js'),
-    awsConfig = require('./aws.json'),
+    awsConfig = require('./aws.prod.json'),
     _ = require('lodash'),
     AWS = require('aws-sdk'),
     bcrypt = require('bcrypt-as-promised'),
     jwtToken = require('./oauth-jwt.js');
 
-AWS.config.loadFromPath(__dirname + '/aws.json');
+AWS.config.update(awsConfig);
 AWS.config.dynamodb = awsConfig.dynamodb;
 
 var docClient = new AWS.DynamoDB.DocumentClient();
 
-require('./seed.js').run();
+require('./data/seed.js').run();
 
 model = module.exports;
 

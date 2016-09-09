@@ -1,0 +1,15 @@
+{
+    "AttributeDefinitions": [{
+        "AttributeName": "accessToken",
+        "AttributeType": "S"
+    }],
+    "TableName": "oauth_accesstoken",
+    "KeySchema": [{
+        "AttributeName": "accessToken",
+        "KeyType": "HASH"
+    }],
+    "ProvisionedThroughput": {
+        "ReadCapacityUnits": 12,
+        "WriteCapacityUnits": 6
+    }
+}

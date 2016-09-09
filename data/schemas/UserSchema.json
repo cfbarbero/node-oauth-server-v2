@@ -1,0 +1,15 @@
+{
+    "AttributeDefinitions": [{
+        "AttributeName": "username",
+        "AttributeType": "S"
+    }],
+    "TableName": "oauth_user",
+    "KeySchema": [{
+        "AttributeName": "username",
+        "KeyType": "HASH"
+    }],
+    "ProvisionedThroughput": {
+        "ReadCapacityUnits": 6,
+        "WriteCapacityUnits": 6
+    }
+}
