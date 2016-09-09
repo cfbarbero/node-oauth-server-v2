@@ -12,7 +12,7 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json());
 
-model = require('./model-' + config.model + '.js');
+model = require('./model-' + config.model.name + '.js');
 
 app.oauth = oauthserver({
     model: model,

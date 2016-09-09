@@ -1,17 +1,16 @@
 var config = require('./config.js'),
+    awsConfig = require('./aws.json'),
     _ = require('lodash'),
     AWS = require('aws-sdk'),
+    bcrypt = require('bcrypt-as-promised'),
     jwtToken = require('./oauth-jwt.js');
 
 AWS.config.loadFromPath(__dirname + '/aws.json');
+AWS.config.dynamodb = awsConfig.dynamodb;
 
-var docClient = new AWS.DynamoDB.DocumentClient({
-    endpoint: 'http://localhost:8000'
-});
+var docClient = new AWS.DynamoDB.DocumentClient();
 
-if (config.seedDB) {
-    require('./seed.js').seedData();
-}
+require('./seed.js').run();
 
 model = module.exports;
 
@@ -30,7 +29,7 @@ function getAccessTokenFromDynamo(bearerToken, callback) {
     console.log('in getAccessToken (bearerToken: ' + bearerToken + ')');
 
     docClient.get({
-            TableName: config.dynamoTables.oauthAccessToken,
+            TableName: config.model.options.dynamoTables.oauthAccessToken,
             Key: {
                 accessToken: bearerToken
             }
@@ -64,7 +63,7 @@ function saveAccessTokenToDynamo(accessToken, clientId, expires, user, callback)
     console.log('saving', token);
 
     docClient.put({
-        TableName: config.dynamoTables.oauthAccessToken,
+        TableName: config.model.options.dynamoTables.oauthAccessToken,
         Item: token
     }, callback);
 };
@@ -72,35 +71,37 @@ function saveAccessTokenToDynamo(accessToken, clientId, expires, user, callback)
 model.getClient = function(clientId, clientSecret, callback) {
     console.log('in getClient (clientId: ' + clientId + ', clientSecret: ' + clientSecret + ')');
     docClient.get({
-            TableName: config.dynamoTables.oauthClient,
+            TableName: config.model.options.dynamoTables.oauthClient,
             Key: {
                 clientId: clientId
             }
-        })
-        .promise()
+        }).promise()
         .then(function(data) {
-            if (!data.Item) {
+            var client = data.Item;
+            if (!client) {
                 return callback(false, false);
             }
-            if (data.Item.clientSecret !== clientSecret) return callback();
-            callback(null, data.Item);
+
+            bcrypt.compare(clientSecret, client.clientSecret)
+                .then(function() {
+                    callback(null, client);
+                });
+        })
+        .catch(bcrypt.MISMATCH_ERROR, function(err) {
+            return callback();
         })
         .catch(function(err) {
             callback(err);
         });
 };
 
-// This will very much depend on your setup, I wouldn't advise doing anything exactly like this but
-// it gives an example of how to use the method to restrict certain grant types
-var authorizedClientIds = ['abc1', 'def2'];
+
 model.grantTypeAllowed = function(clientId, grantType, callback) {
     console.log('in grantTypeAllowed (clientId: ' + clientId + ', grantType: ' + grantType + ')');
 
-    if (grantType === 'password') {
-        return callback(false, authorizedClientIds.indexOf(clientId) >= 0);
-    }
-
+    // all grant types supported for every client
     callback(false, true);
+
 };
 
 
@@ -110,17 +111,24 @@ model.getUser = function(username, password, callback) {
     console.log('in getUser (username: ' + username + ', password: ' + password + ')');
 
     docClient.get({
-            TableName: config.dynamoTables.oauthUser,
+            TableName: config.model.options.dynamoTables.oauthUser,
             Key: {
                 username: username
             }
-        })
-        .promise()
+        }).promise()
         .then(function(data) {
-            if (!data.Item) {
-                callback(false, false);
+          var user = data.Item;
+            if (!user) {
+                return callback(false, false);
             }
-            callback(false, data.Item.userId);
+
+            bcrypt.compare(password, user.password)
+                .then(function() {
+                    callback(false, user.userId);
+                });
+        })
+        .catch(bcrypt.MISMATCH_ERROR, function(err) {
+             callback();
         })
         .catch(function(err) {
             callback(err);
@@ -130,33 +138,35 @@ model.getUser = function(username, password, callback) {
 model.getUserFromClient = function(clientId, clientSecret, callback) {
     console.log('in getUserFromClient (clientId: ' + clientId + ', clientSecret: ' + clientSecret);
     docClient.get({
-            TableName: config.dynamoTables.oauthClient,
+            TableName: config.model.options.dynamoTables.oauthClient,
             Key: {
                 'clientId': clientId
             }
         }).promise()
-        .then(function(client) {
-            if (!client.Item) {
+        .then(function(data) {
+          var client = data.Item;
+            if (!client) {
                 console.log('client not found');
-                callback(false, false);
+                return callback(false, false);
             }
-            console.log('found client', client.Item);
+            console.log('Found client', client);
 
             return docClient.get({
-                TableName: config.dynamoTables.oauthUser,
+                TableName: config.model.options.dynamoTables.oauthUser,
                 Key: {
-                    username: client.Item.username
+                    username: client.username
                 }
             }).promise();
         })
-        .then(function(user) {
-            if (!user.Item) {
+        .then(function(data) {
+          var user = data.Item;
+            if (!user) {
                 console.log('user not found');
                 callback(false, false);
             }
-            console.log('found user', user.Item);
+            console.log('found user', user);
 
-            callback(false, user.Item);
+            callback(false, user);
         })
         .catch(function(err) {
             console.log(err);

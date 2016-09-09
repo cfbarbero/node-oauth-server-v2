@@ -1,12 +1,17 @@
 module.exports = {
-    model: 'dynamo',
-    seedDB: true,
-    dynamoTables: {
-        oauthAccessToken: "oauth2accesstoken",
-        oauthAuthCode: "oauth2authcode",
-        oauthRefreshToken: "oauth2refreshtoken",
-        oauthClient: "oauth2client",
-        oauthUser: "oauth2user"
+    model: {
+        name: 'dynamo',
+        options: {
+            seedDB: true,
+            createTables: true,
+            dynamoTables: {
+                oauthAccessToken: "oauth2accesstoken",
+                oauthAuthCode: "oauth2authcode",
+                oauthRefreshToken: "oauth2refreshtoken",
+                oauthClient: "oauth2client",
+                oauthUser: "oauth2user"
+            }
+        }
     },
     // the expiry times should be consistent between the oauth2-server settings
     // and the JWT settings (not essential, but makes sense)
@@ -18,5 +23,4 @@ module.exports = {
         refreshTokenSecret: 'JWPVzFWkqGxoE2C2'
     },
     tokenFormat: 'jwt'
-
 }

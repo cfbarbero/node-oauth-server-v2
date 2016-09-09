@@ -1,22 +1,35 @@
 var config = require('./config.js'),
+    awsConfig = require('./aws.json'),
     AWS = require('aws-sdk'),
+    bcrypt = require('bcrypt-as-promised'),
     _ = require('lodash');
 
 AWS.config.loadFromPath(__dirname + '/aws.json');
-var docClient = new AWS.DynamoDB.DocumentClient({
-    endpoint: 'http://localhost:8000'
-});
+AWS.config.dynamodb = awsConfig.dynamodb;
+var dynamodb = new AWS.DynamoDB();
+var docClient = new AWS.DynamoDB.DocumentClient();
 
-createTables = function() {
-    //
-    // Table definitions
-    //
-    var OAuth2AccessToken = {
+var run = function() {
+    if (config.model.options.createTables) {
+        console.log('Creating Tables');
+        createTables();
+    }
+
+    if (config.model.options.seedDB) {
+        console.log('Seeding Data');
+        seedData();
+    }
+}
+
+
+
+var createTables = function() {
+    var tableDefinitions = [{
         AttributeDefinitions: [{
             AttributeName: "accessToken",
             AttributeType: "S"
         }],
-        TableName: config.dynamoTables.oauthAccessToken,
+        TableName: config.model.options.dynamoTables.oauthAccessToken,
         KeySchema: [{
             AttributeName: "accessToken",
             KeyType: "HASH"
@@ -25,14 +38,12 @@ createTables = function() {
             ReadCapacityUnits: 12,
             WriteCapacityUnits: 6
         }
-    };
-
-    var OAuth2RefreshToken = {
+    }, {
         AttributeDefinitions: [{
             AttributeName: "refreshToken",
             AttributeType: "S"
         }],
-        TableName: config.dynamoTables.oauthRefreshToken,
+        TableName: config.model.options.dynamoTables.oauthRefreshToken,
         KeySchema: [{
             AttributeName: "refreshToken",
             KeyType: "HASH"
@@ -41,14 +52,12 @@ createTables = function() {
             ReadCapacityUnits: 6,
             WriteCapacityUnits: 6
         }
-    };
-
-    var OAuth2AuthCode = {
+    }, {
         AttributeDefinitions: [{
             AttributeName: "authCode",
             AttributeType: "S"
         }],
-        TableName: config.dynamoTables.oauthAuthCode,
+        TableName: config.model.options.dynamoTables.oauthAuthCode,
         KeySchema: [{
             AttributeName: "authCode",
             KeyType: "HASH"
@@ -57,14 +66,12 @@ createTables = function() {
             ReadCapacityUnits: 6,
             WriteCapacityUnits: 6
         }
-    };
-
-    var OAuth2Client = {
+    }, {
         AttributeDefinitions: [{
             AttributeName: "clientId",
             AttributeType: "S"
         }],
-        TableName: config.dynamoTables.oauthClient,
+        TableName: config.model.options.dynamoTables.oauthClient,
         KeySchema: [{
             AttributeName: "clientId",
             KeyType: "HASH"
@@ -73,14 +80,12 @@ createTables = function() {
             ReadCapacityUnits: 6,
             WriteCapacityUnits: 6
         }
-    };
-
-    var OAuth2User = {
+    }, {
         AttributeDefinitions: [{
             AttributeName: "username",
             AttributeType: "S"
         }],
-        TableName: config.dynamoTables.oauthUser,
+        TableName: config.model.options.dynamoTables.oauthUser,
         KeySchema: [{
             AttributeName: "username",
             KeyType: "HASH"
@@ -89,31 +94,32 @@ createTables = function() {
             ReadCapacityUnits: 6,
             WriteCapacityUnits: 6
         }
-    };
+    }];
 
-    dal.db.createTable(OAuth2AccessToken, function(err, data) {
-        if (err) console.log(err); // an error occurred
-    });
+    dynamodb.listTables({
+            ExclusiveStartTableName: 'oauth2'
+        })
+        .promise()
+        .then(function(data) {
+            console.log('Found Tables:', data);
+            _.forEach(tableDefinitions, function(table) {
+                if (!_.include(data.TableNames, table.TableName)) {
+                    console.log('Creating:', table.TableName);
+                    dynamodb.createTable(table)
+                        .promise()
+                        .then(function(data) {
+                            console.log('Created:', table.TableName);
+                        })
+                        .catch(function(err) {
+                            console.log(err);
+                        });
+                }
+            });
 
-    dal.db.createTable(OAuth2RefreshToken, function(err, data) {
-        if (err) console.log(err); // an error occurred
-    });
-
-    dal.db.createTable(OAuth2AuthCode, function(err, data) {
-        if (err) console.log(err); // an error occurred
-    });
-
-    dal.db.createTable(OAuth2Client, function(err, data) {
-        if (err) console.log(err); // an error occurred
-    });
-
-    dal.db.createTable(OAuth2User, function(err, data) {
-        if (err) console.log(err); // an error occurred
-    });
-
+        });
 }
 
-seedClients = function() {
+var seedClients = function() {
     var clients = [{
         clientId: 'foo',
         clientSecret: 'bar',
@@ -126,13 +132,18 @@ seedClients = function() {
 
     _(clients).forEach(function(client) {
         console.log('Creating:', client);
-        docClient.put({
-                TableName: config.dynamoTables.oauthClient,
-                Item: client
+
+        bcrypt.hash(client.clientSecret)
+            .then(function(hash) {
+                client.clientSecret = hash;
+                return docClient.put({
+                    TableName: config.model.options.dynamoTables.oauthClient,
+                    Item: client
+                }).promise();
+
             })
-            .promise()
             .then(function(data) {
-                console.log(data);
+                console.log('Created: ', client);
             })
             .catch(function(err) {
                 console.log(err);
@@ -140,7 +151,7 @@ seedClients = function() {
     });
 }
 
-seedUsers = function() {
+var seedUsers = function() {
     var users = [{
         username: 'cfbarbero',
         password: 'test',
@@ -149,13 +160,17 @@ seedUsers = function() {
 
     _(users).forEach(function(user) {
         console.log('Creating:', user);
-        docClient.put({
-                TableName: config.dynamoTables.oauthUser,
-                Item: user
+
+        bcrypt.hash(user.password)
+            .then(function(hash) {
+                user.password = hash;
+                return docClient.put({
+                    TableName: config.model.options.dynamoTables.oauthUser,
+                    Item: user
+                }).promise();
             })
-            .promise()
             .then(function(data) {
-                console.log(data);
+                console.log('Created:', user);
             })
             .catch(function(err) {
                 console.log(err);
@@ -163,12 +178,13 @@ seedUsers = function() {
     });
 }
 
-seedData = function() {
+var seedData = function() {
     seedClients();
     seedUsers();
 }
 
 module.exports = {
     createTables: createTables,
-    seedData: seedData
+    seedData: seedData,
+    run: run
 }
