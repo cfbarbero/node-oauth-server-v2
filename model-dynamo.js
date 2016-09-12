@@ -1,12 +1,15 @@
-var config = require('./config.js'),
-    awsConfig = require('./aws.prod.json'),
+var config = require('config'),
     _ = require('lodash'),
     AWS = require('aws-sdk'),
     bcrypt = require('bcrypt-as-promised'),
     jwtToken = require('./oauth-jwt.js');
 
+var awsConfig = config.get('aws');
 AWS.config.update(awsConfig);
-AWS.config.dynamodb = awsConfig.dynamodb;
+
+if (config.get('aws.dynamodb.local')) {
+    AWS.config.dynamodb.endpoint = "http://localhost:8000";
+}
 
 var docClient = new AWS.DynamoDB.DocumentClient();
 
@@ -29,7 +32,7 @@ function getAccessTokenFromDynamo(bearerToken, callback) {
     console.log('in getAccessToken (bearerToken: ' + bearerToken + ')');
 
     docClient.get({
-            TableName: config.model.options.dynamoTables.oauthAccessToken,
+            TableName: config.get('model.options.dynamoTables.oauthAccessToken'),
             Key: {
                 accessToken: bearerToken
             }
@@ -63,7 +66,7 @@ function saveAccessTokenToDynamo(accessToken, clientId, expires, user, callback)
     console.log('saving', token);
 
     docClient.put({
-        TableName: config.model.options.dynamoTables.oauthAccessToken,
+        TableName: config.get('model.options.dynamoTables.oauthAccessToken'),
         Item: token
     }, callback);
 };
@@ -71,7 +74,7 @@ function saveAccessTokenToDynamo(accessToken, clientId, expires, user, callback)
 model.getClient = function(clientId, clientSecret, callback) {
     console.log('in getClient (clientId: ' + clientId + ', clientSecret: ' + clientSecret + ')');
     docClient.get({
-            TableName: config.model.options.dynamoTables.oauthClient,
+            TableName: config.get('model.options.dynamoTables.oauthClient'),
             Key: {
                 clientId: clientId
             }
@@ -111,13 +114,13 @@ model.getUser = function(username, password, callback) {
     console.log('in getUser (username: ' + username + ', password: ' + password + ')');
 
     docClient.get({
-            TableName: config.model.options.dynamoTables.oauthUser,
+            TableName: config.get('model.options.dynamoTables.oauthUser'),
             Key: {
                 username: username
             }
         }).promise()
         .then(function(data) {
-          var user = data.Item;
+            var user = data.Item;
             if (!user) {
                 return callback(false, false);
             }
@@ -128,7 +131,7 @@ model.getUser = function(username, password, callback) {
                 });
         })
         .catch(bcrypt.MISMATCH_ERROR, function(err) {
-             callback();
+            callback();
         })
         .catch(function(err) {
             callback(err);
@@ -138,13 +141,13 @@ model.getUser = function(username, password, callback) {
 model.getUserFromClient = function(clientId, clientSecret, callback) {
     console.log('in getUserFromClient (clientId: ' + clientId + ', clientSecret: ' + clientSecret);
     docClient.get({
-            TableName: config.model.options.dynamoTables.oauthClient,
+            TableName: config.get('model.options.dynamoTables.oauthClient'),
             Key: {
                 'clientId': clientId
             }
         }).promise()
         .then(function(data) {
-          var client = data.Item;
+            var client = data.Item;
             if (!client) {
                 console.log('client not found');
                 return callback(false, false);
@@ -152,14 +155,14 @@ model.getUserFromClient = function(clientId, clientSecret, callback) {
             console.log('Found client', client);
 
             return docClient.get({
-                TableName: config.model.options.dynamoTables.oauthUser,
+                TableName: config.get('model.options.dynamoTables.oauthUser'),
                 Key: {
                     username: client.username
                 }
             }).promise();
         })
         .then(function(data) {
-          var user = data.Item;
+            var user = data.Item;
             if (!user) {
                 console.log('user not found');
                 callback(false, false);

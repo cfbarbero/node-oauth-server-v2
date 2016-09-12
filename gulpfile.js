@@ -11,16 +11,33 @@ gulp.task('bump', function() {
         .pipe(gulp.dest('./'));
 });
 
-gulp.task('zip', () => {
+gulp.task('zip1', () => {
     return gulp.src(
             [
                 "*.js",
+                "*.json",
                 "data/**/*",
+                "config/**/*",
                 "package.json"
             ], {
                 base: "."
             })
         .pipe(zip(pjson.name + '-' + pjson.version + '.zip'))
+        .pipe(gulp.dest('dist'));
+});
+
+gulp.task('zip2', () => {
+    return gulp.src(
+            [
+                "*.js",
+                "*.json",
+                "data/**/*",
+                "config/**/*",
+                "package.json"
+            ], {
+                base: "."
+            })
+        .pipe(zip('deploy.zip'))
         .pipe(gulp.dest('dist'));
 });
 
@@ -33,7 +50,7 @@ gulp.task('clean', function() {
 gulp.task('release', function(callback) {
     runSequence(
         'bump',
-        'zip',
+        'zip2',
         function(error) {
             if (error) {
                 console.log(error.message);

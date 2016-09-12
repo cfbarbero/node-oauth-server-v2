@@ -1,11 +1,14 @@
 var JWT = require('jsonwebtoken'),
-    config = require('./config.js');
+    AWS = require('aws-sdk'),
+    config = require('config');
 
+var awsConfig = config.get('aws');
+AWS.config.update(awsConfig);
 
 // generateToken
 // This generateToken implementation generates a token with JWT.
 // the token output is the Base64 encoded string.
- function generateToken(type, req, callback) {
+function generateToken(type, req, callback) {
     var token;
     var secret;
     var user = req.user;
@@ -23,14 +26,17 @@ var JWT = require('jsonwebtoken'),
     };
 
     if (type === 'accessToken') {
-        secret = config.jwt.accessTokenSecret;
-        exp.setSeconds(exp.getSeconds() + config.accessTokenExpirySeconds);
+        secret = config.get('jwt.accessTokenSecret');
+        exp.setSeconds(exp.getSeconds() + config.get('accessTokenExpirySeconds'));
     } else {
-        secret = config.jwt.refreshTokenSecret;
-        exp.setSeconds(exp.getSeconds() + config.refreshTokenExpirySeconds);
+        secret = config.get('jwt.refreshTokenSecret');
+        exp.setSeconds(exp.getSeconds() + config.get('refreshTokenExpirySeconds'));
     }
     payload.exp = exp.getTime();
 
+
+    var kms = new AWS.KMS();
+    var keyId = "arn:aws:kms:us-east-1:195702235524:key/5ba69d52-6447-4f2a-b686-ddd36fe45e66";
     token = JWT.sign(payload, secret, options);
 
     callback(false, token);
@@ -40,7 +46,7 @@ var JWT = require('jsonwebtoken'),
 // user in this function which oauth2-server puts into the req object
 function getAccessToken(bearerToken, callback) {
 
-    return JWT.verify(bearerToken, config.jwt.accessTokenSecret, function(err, decoded) {
+    return JWT.verify(bearerToken, config.get('jwt.accessTokenSecret'), function(err, decoded) {
 
         if (err) {
             return callback(err, false); // the err contains JWT error data
@@ -60,7 +66,7 @@ function getAccessToken(bearerToken, callback) {
 // The bearer token is a JWT, so we decrypt and verify it. We get a reference to the
 // user in this function which oauth2-server puts into the req object
 function getRefreshToken(bearerToken, callback) {
-    return JWT.verify(bearerToken, config.jwt.refreshTokenSecret, function(err, decoded) {
+    return JWT.verify(bearerToken, config.get('jwt.refreshTokenSecret'), function(err, decoded) {
 
         if (err) {
             return callback(err, false);
@@ -86,8 +92,8 @@ function saveAccessToken(accessToken, clientId, expires, userId, callback) {
 
 
 module.exports = {
-  generateToken: generateToken,
-  getAccessToken: getAccessToken,
-  getRefreshToken: getRefreshToken,
-  saveAccessToken: saveAccessToken
+    generateToken: generateToken,
+    getAccessToken: getAccessToken,
+    getRefreshToken: getRefreshToken,
+    saveAccessToken: saveAccessToken
 }

@@ -1,6 +1,6 @@
 {
   "name": "node-oauth-server-v2",
-  "version": "1.0.9",
+  "version": "1.0.19",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -16,11 +16,15 @@
   "dependencies": {
     "aws-sdk": "^2.5.6",
     "bcrypt": "^0.8.7",
+    "bcrypt-as-promised": "^1.1.0",
     "bluebird": "^3.4.6",
     "body-parser": "^1.13.0",
+    "config": "^1.21.0",
     "dynamo-seeder": "^0.2.1",
     "express": "^4.12.4",
     "jsonwebtoken": "^5.0.2",
+    "lodash": "^4.15.0",
+    "node-config": "0.0.2",
     "oauth2-server": "^2.4.0"
   },
   "devDependencies": {

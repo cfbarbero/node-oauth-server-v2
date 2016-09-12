@@ -2,8 +2,8 @@ module.exports = {
     model: {
         name: 'dynamo',
         options: {
-            seedDB: true,
-            createTables: true,
+            seedDB: false,
+            dropTables: true,
             dynamoTables: {
                 oauthAccessToken: "oauth_accesstoken",
                 oauthAuthCode: "oauth_authcode",
@@ -22,5 +22,11 @@ module.exports = {
         accessTokenSecret: 'XT6PRpRuehFsyMa2',
         refreshTokenSecret: 'JWPVzFWkqGxoE2C2'
     },
-    tokenFormat: 'jwt'
+    tokenFormat: 'jwt',
+    aws:{
+      "region": "us-east-1",
+      "dynamodb":{
+        "local": true
+      }
+    }
 }
