@@ -1,0 +1,12 @@
+branch-defaults:
+  seed:
+    environment: jwtAuthserver-env
+global:
+  application_name: jwt-authserver
+  default_ec2_keyname: null
+  default_platform: 64bit Amazon Linux 2016.03 v2.1.3 running Node.js
+  default_region: us-east-1
+  profile: saml
+  sc: git
+deploy:
+  artifact: dist/deploy.zip
