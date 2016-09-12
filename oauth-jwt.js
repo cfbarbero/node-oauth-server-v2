@@ -36,11 +36,41 @@ function generateToken(type, req, callback) {
 
 
     var kms = new AWS.KMS();
-    var keyId = "arn:aws:kms:us-east-1:195702235524:key/5ba69d52-6447-4f2a-b686-ddd36fe45e66";
-    token = JWT.sign(payload, secret, options);
 
-    callback(false, token);
+    // Envelope encryption
+    kms.encrypt({
+            KeyId: config.get('jwt.kmsKeyArn'),
+            Plaintext: secret
+        }).promise()
+        .then(function(data) {
+            console.log(data);
+            console.log(Buffer.from(data.CiphertextBlob, 'base64').toString("ascii"));
+            token = JWT.sign(payload, data.CiphertextBlob, options);
+            callback(false, token);
+        })
+        .catch(function(err) {
+            console.log(err, err.stack); // an error occurred
+        });
 };
+
+function verifyToken(token, callback) {
+    var kms = new AWS.KMS();
+    var signingKey = "CiCnRmG+t+ AQECAHhgj+1L8a3Y2Tyg1OKpV2LRuKIHdFgRyWUujfeLvVa9fQAAAGkwZwYJKoZIhvcNAQcGoFowWAIBADBTBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDIfNO6GnAAAGLA+IzQIBEIAmKgVynAHd3kqhDfnbdlke0rL7uodBHmA2vgoU/jwVHlF7zUqHKR4= Mk=";
+
+    // Envelope encryption
+    kms.decrypt({
+            CiphertextBlob: new Buffer(signingKey, 'base64')
+        }).promise()
+        .then(function(data) {
+            console.log(data);
+            console.log(Buffer.from(data.CiphertextBlob, 'base64').toString("ascii"));
+            token = JWT.sign(payload, data.CiphertextBlob, options);
+            callback(false, token);
+        })
+        .catch(function(err) {
+            console.log(err, err.stack); // an error occurred
+        });
+}
 
 // The bearer token is a JWT, so we decrypt and verify it. We get a reference to the
 // user in this function which oauth2-server puts into the req object
@@ -53,7 +83,7 @@ function getAccessToken(bearerToken, callback) {
         }
 
         // other verifications could be performed here
-        // eg. that the jti is valid
+        // eg. that the jti is valid
 
         var token = {
             expires: new Date(decoded.exp),

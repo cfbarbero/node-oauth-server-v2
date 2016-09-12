@@ -19,8 +19,9 @@ module.exports = {
     refreshTokenExpirySeconds: 1209600, // 14 days
     jwt: {
         issuer: 'thisdemo',
-        accessTokenSecret: 'XT6PRpRuehFsyMa2',
-        refreshTokenSecret: 'JWPVzFWkqGxoE2C2'
+        accessTokenSecret: 'hZ92$JvBfOMAT@GI43A!', // We will use envelope encryption with AWS KMS so it's ok to leave these in here.
+        refreshTokenSecret: '#@7YFKW7&lS$9Z&bWsGx',
+        kmsKeyArn: "arn:aws:kms:us-east-1:195702235524:key/5ba69d52-6447-4f2a-b686-ddd36fe45e66"
     },
     tokenFormat: 'jwt',
     aws:{
