@@ -35,8 +35,6 @@ function generateToken(type, req, callback) {
     payload.exp = exp.getTime();
 
 
-    var kms = new AWS.KMS();
-    var keyId = "arn:aws:kms:us-east-1:195702235524:key/5ba69d52-6447-4f2a-b686-ddd36fe45e66";
     token = JWT.sign(payload, secret, options);
 
     callback(false, token);
