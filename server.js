@@ -30,13 +30,36 @@ app.get('/secret', app.oauth.authorise(), function(req, res) {
     res.send('Secret area');
 });
 
+app.post('/oauth/token/introspect', app.oauth.authorise(), function(req, res) {
+    var token = req.body.token;
+
+    app.oauth.model.getAccessToken(token, function(err, data) {
+        if (err) {
+            console.log('introspect', err);
+
+            var tokenState = {
+                active: false
+            }
+            return res.json(tokenState);
+        }
+
+        console.log(data);
+        var tokenState = {
+            active: true,
+            client_id: data.userId,
+            exp: Date.parse(data.expires)
+        }
+        return res.json(tokenState);
+    })
+});
+
 app.get('/public', function(req, res) {
     // Does not require an access_token
     res.send('Public area');
 });
 
-app.get('/', function(req, res){
-  res.send('Welcome to the JWT OAuth2 Authorization server.')
+app.get('/', function(req, res) {
+    res.send('Welcome to the JWT OAuth2 Authorization server.')
 })
 
 app.use(app.oauth.errorHandler());
@@ -51,6 +74,6 @@ app.use(function(err, req, res, next) {
 
 var port = process.env.PORT || 3000;
 
-app.listen(port, function () {
-  console.log('app listening on port 3000!');
+app.listen(port, function() {
+    console.log('app listening on port 3000!');
 });
