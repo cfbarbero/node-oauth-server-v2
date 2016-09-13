@@ -1,6 +1,10 @@
 branch-defaults:
+  master:
+    environment: jwtAuthserver-env
   seed:
     environment: jwtAuthserver-env
+deploy:
+  artifact: dist/deploy.zip
 global:
   application_name: jwt-authserver
   default_ec2_keyname: null
@@ -8,5 +12,3 @@ global:
   default_region: us-east-1
   profile: saml
   sc: git
-deploy:
-  artifact: dist/deploy.zip
